@@ -69,7 +69,6 @@ Os padrões cobrem comportamentos como:
 
 ## 4. Experimentos
 
-Os experimentos foram executados com `python experimentos.py`.
 Foram comparadas três configurações principais:
 
 | Configuração | X1 | X2 | X3 | Custo |
@@ -92,12 +91,10 @@ Resumo agregado sobre os 3000 acessos do benchmark:
 | alto_desempenho | LRU | 2000 | 13.42 | 36.57% | 9.33% | 8.67% | 45.43% |
 | alto_desempenho | LFU | 2000 | 13.70 | 34.33% | 8.03% | 12.20% | 45.43% |
 
-Os resultados completos estão em `resultados_experimentos.csv`.
-
 ## 5. Busca Competitiva sob Restrição de Custo
 
 Como o enunciado deixa a faixa de custo-alvo a critério do professor, foi adotado custo máximo
-de 1500 para a busca competitiva. O script testa exaustivamente todas as configurações válidas
+de 1500 para a busca competitiva. Foram testadas as configurações válidas
 com `1 <= X1 <= 5`, `X1 <= X2 <= 10` e `X2 <= X3 <= 50`, usando as três políticas.
 
 As cinco melhores configurações encontradas foram:
@@ -109,8 +106,6 @@ As cinco melhores configurações encontradas foram:
 | 5 | 5 | 25 | LFU | 1500 | 14.30 |
 | 2 | 10 | 40 | LRU | 1300 | 14.37 |
 | 2 | 10 | 41 | LRU | 1310 | 14.37 |
-
-Os resultados completos da busca estão em `melhores_configuracoes.csv`.
 
 ## 6. Análise Crítica
 
