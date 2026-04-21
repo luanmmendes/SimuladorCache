@@ -1,6 +1,5 @@
 import sys
 import re
-from collections import OrderedDict
 
 
 class EstruturaCache:
@@ -89,7 +88,7 @@ class L2(EstruturaCache):
     def __init__(self):
         super().__init__()
         self.acesso = 3
-        self.custo = 150
+        self.custo = 50
         self.tamanhoMaximo = 10
 
 
@@ -231,7 +230,7 @@ class Simulador:
                 self.l3.insere(bloco, self.algoritmo)
 
     def calcular_metricas(self):
-        # Custo total da configuração: 200*X1 + 150*X2 + 10*X3
+        # Custo total da configuração: 200*X1 + 50*X2 + 10*X3
         custo_total = (
             (self.l1.custo * self.x1)
             + (self.l2.custo * self.x2)
@@ -302,11 +301,29 @@ class Simulador:
         print("=" * 50)
 
 
+def exibir_uso():
+    print("Uso:")
+    print("  python trabalho.py <string_entrada> <X1> <X2> <X3> <FIFO|LRU|LFU>")
+    print()
+    print("Exemplo:")
+    print("  python trabalho.py abcdabcd 2 4 8 LRU")
+
+
 if __name__ == "__main__":
+    if len(sys.argv) != 6:
+        exibir_uso()
+        sys.exit(1)
+
     # Separa os argumentos da linha de comando
     stringEntrada = sys.argv[1]
-    x1, x2, x3 = int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
-    algoritmo = sys.argv[5]
+    try:
+        x1, x2, x3 = int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
+    except ValueError:
+        print("X1, X2 e X3 devem ser inteiros.")
+        exibir_uso()
+        sys.exit(1)
+
+    algoritmo = sys.argv[5].upper()
 
     # Confere parametros e algoritmo
     valido, mensagem = validar_configuracao(x1, x2, x3, algoritmo)
