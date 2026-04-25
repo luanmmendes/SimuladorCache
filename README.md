@@ -1,5 +1,7 @@
 # Simulador de Hierarquia de Memoria
 
+Projeto feito por: **Luan da Cruz Mendes** e **Marco Túlio Tavares Oliveira**
+
 Simulador em Python para uma hierarquia inclusiva com cache L1, L2, L3 e RAM.
 O programa recebe uma string de acessos, divide a entrada em blocos de 2 caracteres
 e calcula metricas de desempenho para as politicas FIFO, LRU e LFU.
