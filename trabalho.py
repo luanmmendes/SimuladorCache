@@ -2,6 +2,9 @@ import sys
 import re
 
 
+CUSTO_MAXIMO = 1100
+
+
 class EstruturaCache:
     def __init__(self):
         self.acesso = 0
@@ -9,16 +12,14 @@ class EstruturaCache:
         self.tamanho = 0
         self.tamanhoMaximo = 0
         self.list = []
-        self.ordem_insercao = []  # Usado pelo LFU para desempate FIFO
+        self.ordem_insercao = []
         self.frequencia = {}
 
     def busca(self, bloco, algoritmo=None):
         if bloco in self.list:
-            # LRU: move o bloco para o final (mais recente)
             if algoritmo == "LRU":
                 self.list.remove(bloco)
                 self.list.append(bloco)
-            # LFU: incrementa a frequência de uso
             if algoritmo == "LFU":
                 self.frequencia[bloco] = self.frequencia.get(bloco, 0) + 1
             return True
@@ -26,7 +27,6 @@ class EstruturaCache:
             return False
 
     def insere(self, bloco, algoritmo):
-        # Evita duplicatas na cache
         if bloco in self.list:
             return
         if algoritmo == "FIFO":
@@ -41,7 +41,7 @@ class EstruturaCache:
             self.list.append(novo_bloco)
             self.tamanho += 1
         else:
-            self.list.pop(0)  # Remove o primeiro (mais antigo)
+            self.list.pop(0)
             self.list.append(novo_bloco)
 
     def lru_substituir(self, novo_bloco):
@@ -49,7 +49,7 @@ class EstruturaCache:
             self.list.append(novo_bloco)
             self.tamanho += 1
         else:
-            self.list.pop(0)  # Remove o menos recentemente usado (primeiro da lista)
+            self.list.pop(0)
             self.list.append(novo_bloco)
 
     def lfu_substituir(self, novo_bloco):
@@ -59,9 +59,7 @@ class EstruturaCache:
             self.frequencia[novo_bloco] = 1
             self.ordem_insercao.append(novo_bloco)
         else:
-            # Encontra a menor frequência
             menor_freq = min(self.frequencia[b] for b in self.list)
-            # Entre os blocos com menor frequência, usa FIFO (mais antigo na ordem de inserção)
             candidatos = [
                 b
                 for b in self.ordem_insercao
@@ -110,26 +108,18 @@ class RAM(EstruturaCache):
         self.list = list(blocos_distintos)
 
 
-#  PADRÕES DE ACESSO PREDEFINIDOS
-
-# Padrão 1: Alta localidade temporal (poucos blocos repetidos muitas vezes)
-# Blocos: "ab", "cd" se repetem muitas vezes → alta taxa de hit
 PADRAO_ALTA_LOCALIDADE = (
     "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
     "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
     "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
 )
 
-# Padrão 2: Quase aleatório (muitos blocos distintos, pouca repetição)
-# Muitos blocos diferentes → cache não consegue reter
 PADRAO_QUASE_ALEATORIO = (
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN"
     "OPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzAB"
     "CDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop"
 )
 
-# Padrão 3: Com fases distintas (começa repetitivo, depois aleatório)
-# Fase 1: repete "ab", "cd" | Fase 2: muitos blocos novos
 PADRAO_COM_FASES = (
     "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
     "efghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR"
@@ -138,14 +128,11 @@ PADRAO_COM_FASES = (
 
 
 def tratamentoStringEntrada(stringEntrada):
-    # Regex que permite apenas letras maiúsculas e minúsculas
     textoTratado = re.sub("[^a-zA-Z]", "", stringEntrada)
 
-    # Verifica se o tamanho é impar e remove o ultimo caractere
     if len(textoTratado) % 2 != 0:
         textoTratado = textoTratado[:-1]
 
-    # Divide a string em blocos de 2 caracteres
     blocos = []
     for i in range(0, len(textoTratado), 2):
         blocos.append(textoTratado[i : i + 2])
@@ -175,6 +162,10 @@ def validar_configuracao(x1, x2, x3, algoritmo):
     if algoritmo not in ["FIFO", "LRU", "LFU"]:
         return False, "Algoritmo inválido. Use: FIFO, LRU ou LFU."
 
+    custo_total = 200 * x1 + 50 * x2 + 10 * x3
+    if custo_total > CUSTO_MAXIMO:
+        return False, f"Custo total {custo_total} excede o orçamento de {CUSTO_MAXIMO}."
+
     return True, "Configuração válida."
 
 
@@ -186,7 +177,6 @@ class Simulador:
         self.x3 = x3
         self.algoritmo = algoritmo
 
-        # Cria os níveis de cache
         self.l1 = L1()
         self.l1.tamanhoMaximo = x1
         self.l2 = L2()
@@ -194,11 +184,9 @@ class Simulador:
         self.l3 = L3()
         self.l3.tamanhoMaximo = x3
 
-        # RAM com blocos distintos da entrada
         blocos_distintos = set(blocos)
         self.ram = RAM(blocos_distintos)
 
-        # Contadores de métricas
         self.acertos_l1 = 0
         self.acertos_l2 = 0
         self.acertos_l3 = 0
@@ -230,14 +218,12 @@ class Simulador:
                 self.l3.insere(bloco, self.algoritmo)
 
     def calcular_metricas(self):
-        # Custo total da configuração: 200*X1 + 50*X2 + 10*X3
         custo_total = (
             (self.l1.custo * self.x1)
             + (self.l2.custo * self.x2)
             + (self.l3.custo * self.x3)
         )
 
-        # Taxas de acerto
         taxa_l1 = (
             (self.acertos_l1 / self.total_acessos * 100)
             if self.total_acessos > 0
@@ -254,14 +240,12 @@ class Simulador:
             else 0
         )
 
-        # Taxa global de faltas (acessos que foram para RAM)
         taxa_faltas = (
             (self.acessos_ram / self.total_acessos * 100)
             if self.total_acessos > 0
             else 0
         )
 
-        # Tempo médio de acesso
         tempo_medio = (
             (self.tempo_total / self.total_acessos) if self.total_acessos > 0 else 0
         )
@@ -301,40 +285,122 @@ class Simulador:
         print("=" * 50)
 
 
+def carregar_padroes_benchmark(caminho):
+    padroes = []
+    nome_atual = None
+    linhas_atuais = []
+    contador = 1
+
+    with open(caminho, "r", encoding="utf-8") as arquivo:
+        for linha in arquivo:
+            linha = linha.strip()
+            if not linha:
+                continue
+
+            if linha.startswith("#"):
+                if linha.upper().startswith("# PADRAO"):
+                    if linhas_atuais:
+                        padroes.append((nome_atual, "".join(linhas_atuais)))
+                        linhas_atuais = []
+                    nome_atual = linha[1:].strip()
+                continue
+
+            if nome_atual is None:
+                nome_atual = f"PADRAO {contador}"
+                contador += 1
+            linhas_atuais.append(linha)
+
+    if linhas_atuais:
+        padroes.append((nome_atual, "".join(linhas_atuais)))
+
+    return padroes
+
+
+def simular_blocos(blocos, x1, x2, x3, algoritmo):
+    simulador = Simulador(blocos, x1, x2, x3, algoritmo)
+    simulador.simular()
+    return simulador
+
+
+def imprimir_resumo(nome, simulador):
+    metricas = simulador.calcular_metricas()
+    print(f"{nome}")
+    print(f"  Acessos: {simulador.total_acessos}")
+    print(f"  Acertos L1: {simulador.acertos_l1} ({metricas['taxa_l1']:.2f}%)")
+    print(f"  Acertos L2: {simulador.acertos_l2} ({metricas['taxa_l2']:.2f}%)")
+    print(f"  Acertos L3: {simulador.acertos_l3} ({metricas['taxa_l3']:.2f}%)")
+    print(f"  Acessos à RAM: {simulador.acessos_ram} ({metricas['taxa_faltas']:.2f}%)")
+    print(f"  Tempo total: {simulador.tempo_total}")
+    print(f"  Tempo médio: {metricas['tempo_medio']:.2f}")
+    print()
+
+
+def avaliar_benchmark(caminho, x1, x2, x3, algoritmo):
+    padroes = carregar_padroes_benchmark(caminho)
+    if not padroes:
+        print("Nenhum padrão encontrado no arquivo.")
+        return
+
+    todos_blocos = []
+
+    print("=" * 50)
+    print("         RELATÓRIO DO BENCHMARK")
+    print("=" * 50)
+    print(f"Configuração: X1={x1}, X2={x2}, X3={x3}")
+    print(f"Política de substituição: {algoritmo}")
+    print(f"Custo total da configuração: {200 * x1 + 50 * x2 + 10 * x3}")
+    print("=" * 50)
+
+    for nome, texto in padroes:
+        blocos = tratamentoStringEntrada(texto)
+        todos_blocos.extend(blocos)
+        simulador = simular_blocos(blocos, x1, x2, x3, algoritmo)
+        imprimir_resumo(nome, simulador)
+
+    simulador_total = simular_blocos(todos_blocos, x1, x2, x3, algoritmo)
+    print("=" * 50)
+    imprimir_resumo("RESULTADO GERAL", simulador_total)
+
+
 def exibir_uso():
     print("Uso:")
     print("  python trabalho.py <string_entrada> <X1> <X2> <X3> <FIFO|LRU|LFU>")
+    print("  python trabalho.py --arquivo <caminho> <X1> <X2> <X3> <FIFO|LRU|LFU>")
     print()
     print("Exemplo:")
     print("  python trabalho.py abcdabcd 2 4 8 LRU")
+    print("  python trabalho.py --arquivo benchmark_padroes_memoria.txt 3 6 20 LRU")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 6:
+    modo_arquivo = len(sys.argv) == 7 and sys.argv[1] in ["--arquivo", "-a"]
+
+    if len(sys.argv) != 6 and not modo_arquivo:
         exibir_uso()
         sys.exit(1)
 
-    # Separa os argumentos da linha de comando
-    stringEntrada = sys.argv[1]
+    inicio_parametros = 3 if modo_arquivo else 2
     try:
-        x1, x2, x3 = int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
+        x1 = int(sys.argv[inicio_parametros])
+        x2 = int(sys.argv[inicio_parametros + 1])
+        x3 = int(sys.argv[inicio_parametros + 2])
     except ValueError:
         print("X1, X2 e X3 devem ser inteiros.")
         exibir_uso()
         sys.exit(1)
 
-    algoritmo = sys.argv[5].upper()
+    algoritmo = sys.argv[inicio_parametros + 3].upper()
 
-    # Confere parametros e algoritmo
     valido, mensagem = validar_configuracao(x1, x2, x3, algoritmo)
     if not valido:
         print(mensagem)
         sys.exit(1)
 
-    # Trata a string de entrada
-    blocos = tratamentoStringEntrada(stringEntrada)
+    if modo_arquivo:
+        avaliar_benchmark(sys.argv[2], x1, x2, x3, algoritmo)
+    else:
+        stringEntrada = sys.argv[1]
+        blocos = tratamentoStringEntrada(stringEntrada)
 
-    # Hierarquia de memória inclusiva
-    simulador = Simulador(blocos, x1, x2, x3, algoritmo)
-    simulador.simular()
-    simulador.exibir_relatorio()
+        simulador = simular_blocos(blocos, x1, x2, x3, algoritmo)
+        simulador.exibir_relatorio()

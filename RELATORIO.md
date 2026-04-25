@@ -1,141 +1,132 @@
-# Relatório do Simulador de Hierarquia de Memória
+# Relatorio do Simulador de Hierarquia de Memoria
 
-## 1. Implementação
+## 1. Implementacao
 
 O trabalho foi implementado em Python no arquivo `trabalho.py`.
-A hierarquia simulada possui quatro níveis:
+A hierarquia simulada possui quatro niveis:
 
-| Nível | Tempo de acesso | Custo por bloco | Tamanho máximo |
+| Nivel | Tempo de acesso | Custo por bloco | Tamanho maximo |
 |---|---:|---:|---:|
 | L1 | 1 | 200 | 5 |
 | L2 | 3 | 50 | 10 |
 | L3 | 6 | 10 | 50 |
-| RAM | 16 | 1 | automático |
+| RAM | 16 | 1 | automatico |
 
-A RAM é inicializada automaticamente com todos os blocos distintos presentes na entrada.
-A entrada é processada da esquerda para a direita, em blocos consecutivos de dois caracteres.
-Caracteres não alfabéticos são descartados e, quando a quantidade de caracteres válidos é ímpar,
-o último caractere é ignorado.
+A RAM e inicializada automaticamente com todos os blocos distintos presentes na entrada.
+A entrada e processada da esquerda para a direita, em blocos consecutivos de dois caracteres.
+Caracteres nao alfabeticos sao descartados e, quando a quantidade de caracteres validos e impar,
+o ultimo caractere e ignorado.
 
-A hierarquia é inclusiva: quando um bloco é encontrado em L2, ele é promovido para L1; quando é
-encontrado em L3, é promovido para L2 e L1; quando é encontrado apenas na RAM, é carregado em
+A hierarquia e inclusiva: quando um bloco e encontrado em L2, ele e promovido para L1; quando e
+encontrado em L3, e promovido para L2 e L1; quando e encontrado apenas na RAM, e carregado em
 L3, L2 e L1.
 
-Cada cache aplica a política de substituição localmente. As políticas implementadas são:
+Cada cache aplica a politica de substituicao localmente. As politicas implementadas sao:
 
-- `FIFO`: remove o bloco inserido há mais tempo.
+- `FIFO`: remove o bloco inserido ha mais tempo.
 - `LRU`: remove o bloco menos recentemente usado.
-- `LFU`: remove o bloco com menor frequência de uso. Em caso de empate, usa FIFO pela ordem de inserção.
+- `LFU`: remove o bloco com menor frequencia de uso. Em caso de empate, usa FIFO pela ordem de insercao.
 
-## 2. Métricas Calculadas
+## 2. Metricas Calculadas
 
-O simulador exibe as métricas obrigatórias:
+O simulador exibe as metricas obrigatorias:
 
-- configuração utilizada: `X1`, `X2`, `X3` e política;
+- configuracao utilizada: `X1`, `X2`, `X3` e politica;
 - custo total;
-- número total de acessos;
+- numero total de acessos;
 - acertos em L1, L2 e L3;
-- acessos à RAM;
+- acessos a RAM;
 - taxa de acerto de L1, L2 e L3;
 - taxa global de faltas;
 - tempo total acumulado;
-- tempo médio de acesso.
+- tempo medio de acesso.
 
-Fórmulas usadas:
+Formulas usadas:
 
 - Custo total: `200*X1 + 50*X2 + 10*X3`
 - Taxa de acerto de cada cache: `acertos_no_nivel / total_acessos * 100`
 - Taxa global de faltas: `acessos_ram / total_acessos * 100`
-- Tempo médio: `tempo_total / total_acessos`
+- Tempo medio: `tempo_total / total_acessos`
 
 ## 3. Entradas de Teste
 
-O arquivo `benchmark_padroes_memoria.txt` contém 10 padrões de acesso. Cada padrão possui
-3 strings de 200 caracteres, correspondendo a 100 acessos por string. Portanto, cada padrão
+O arquivo `benchmark_padroes_memoria.txt` contem 10 padroes de acesso. Cada padrao possui
+3 strings de 200 caracteres, correspondendo a 100 acessos por string. Portanto, cada padrao
 foi avaliado com 300 acessos e o conjunto completo com 3000 acessos.
 
-Os padrões cobrem comportamentos como:
+Os padroes cobrem comportamentos como:
 
 - alta localidade temporal;
 - acesso sequencial com grande variedade;
-- alternância entre fases;
-- blocos quentes com intrusões frias;
-- padrão quase aleatório;
-- repetição cíclica moderada;
+- alternancia entre fases;
+- blocos quentes com intrusoes frias;
+- padrao quase aleatorio;
+- repeticao ciclica moderada;
 - rajadas de localidade;
-- concentração progressiva;
-- alternância entre bloco quente e variável;
-- retorno tardio com distância de reuso longa.
+- concentracao progressiva;
+- alternancia entre bloco quente e variavel;
+- retorno tardio com distancia de reuso longa.
 
-## 4. Experimentos
+## 4. Execucao por Arquivo
 
-Foram comparadas três configurações principais:
+O programa aceita uma string diretamente pela linha de comando ou um arquivo completo:
 
-| Configuração | X1 | X2 | X3 | Custo |
-|---|---:|---:|---:|---:|
-| baixo_custo | 1 | 2 | 5 | 350 |
-| medio_custo | 3 | 6 | 20 | 1100 |
-| alto_desempenho | 5 | 10 | 50 | 2000 |
+```bash
+python trabalho.py abcdabcd 2 4 8 LRU
+python trabalho.py --arquivo benchmark_padroes_memoria.txt 1 10 40 LFU
+```
+
+No modo `--arquivo`, cada linha `# PADRAO` inicia um novo grupo. O simulador imprime o
+resultado de cada padrao e depois simula todos os acessos juntos para gerar o resultado geral.
+
+## 5. Experimentos
+
+Como o limite de custo informado para a arquitetura foi `1100`, as configuracoes com custo
+maior que esse valor sao rejeitadas pelo programa.
 
 Resumo agregado sobre os 3000 acessos do benchmark:
 
-| Configuração | Política | Custo | Tempo médio | L1 | L2 | L3 | Faltas |
-|---|---|---:|---:|---:|---:|---:|---:|
-| baixo_custo | FIFO | 350 | 20.13 | 0.00% | 2.50% | 33.27% | 64.23% |
-| baixo_custo | LRU | 350 | 19.86 | 0.00% | 4.90% | 31.67% | 63.43% |
-| baixo_custo | LFU | 350 | 20.21 | 0.00% | 4.90% | 29.43% | 65.67% |
-| medio_custo | FIFO | 1100 | 16.20 | 3.30% | 33.80% | 9.60% | 53.30% |
-| medio_custo | LRU | 1100 | 16.02 | 4.90% | 34.00% | 8.00% | 53.10% |
-| medio_custo | LFU | 1100 | 16.57 | 4.90% | 30.00% | 10.00% | 55.10% |
-| alto_desempenho | FIFO | 2000 | 13.47 | 35.67% | 9.83% | 9.07% | 45.43% |
-| alto_desempenho | LRU | 2000 | 13.42 | 36.57% | 9.33% | 8.67% | 45.43% |
-| alto_desempenho | LFU | 2000 | 13.70 | 34.33% | 8.03% | 12.20% | 45.43% |
+| Configuracao | X1 | X2 | X3 | Politica | Custo | Tempo medio | L1 | L2 | L3 | Faltas |
+|---|---:|---:|---:|---|---:|---:|---:|---:|---:|---:|
+| baixo_custo | 1 | 2 | 5 | FIFO | 350 | 19.95 | 0.03% | 2.53% | 34.27% | 63.17% |
+| baixo_custo | 1 | 2 | 5 | LRU | 350 | 19.68 | 0.03% | 4.93% | 32.63% | 62.40% |
+| baixo_custo | 1 | 2 | 5 | LFU | 350 | 19.77 | 0.03% | 6.63% | 29.77% | 63.57% |
+| orcamento_equilibrado | 3 | 6 | 20 | FIFO | 1100 | 15.25 | 3.47% | 34.70% | 14.07% | 47.77% |
+| orcamento_equilibrado | 3 | 6 | 20 | LRU | 1100 | 15.12 | 5.03% | 35.07% | 11.93% | 47.97% |
+| orcamento_equilibrado | 3 | 6 | 20 | LFU | 1100 | 13.34 | 11.37% | 28.37% | 22.33% | 37.93% |
+| melhor_benchmark | 1 | 10 | 40 | FIFO | 1100 | 13.26 | 0.03% | 47.13% | 14.77% | 38.07% |
+| melhor_benchmark | 1 | 10 | 40 | LRU | 1100 | 13.18 | 0.03% | 47.60% | 14.60% | 37.77% |
+| melhor_benchmark | 1 | 10 | 40 | LFU | 1100 | 12.69 | 0.03% | 44.13% | 22.47% | 33.37% |
 
-## 5. Busca Competitiva sob Restrição de Custo
+## 6. Analise Critica
 
-Como o enunciado deixa a faixa de custo-alvo a critério do professor, foi adotado custo máximo
-de 1500 para a busca competitiva. Foram testadas as configurações válidas
-com `1 <= X1 <= 5`, `X1 <= X2 <= 10` e `X2 <= X3 <= 50`, usando as três políticas.
-
-As cinco melhores configurações encontradas foram:
-
-| X1 | X2 | X3 | Política | Custo | Tempo médio |
-|---:|---:|---:|---|---:|---:|
-| 5 | 5 | 25 | LRU | 1500 | 14.01 |
-| 5 | 5 | 25 | FIFO | 1500 | 14.10 |
-| 5 | 5 | 25 | LFU | 1500 | 14.30 |
-| 2 | 10 | 40 | LRU | 1300 | 14.37 |
-| 2 | 10 | 41 | LRU | 1310 | 14.37 |
-
-## 6. Análise Crítica
-
-A configuração de alto desempenho reduziu o tempo médio de acesso em relação às configurações
-menores, mas também aumentou bastante o custo. A configuração `alto_desempenho` com LRU teve
-tempo médio de 13.42 e custo 2000. Já a melhor configuração sob custo até 1500 foi `X1=5`,
-`X2=5`, `X3=25` com LRU, tempo médio de 14.01. Isso representa desempenho próximo ao máximo
-testado, mas com custo 25% menor.
-
-Nos resultados agregados, LRU foi a política mais consistente. Ela obteve o menor tempo médio
-nas três configurações principais. FIFO ficou próximo em alguns casos, mas tende a perder quando
-o padrão se beneficia de reutilização recente. LFU foi útil para preservar blocos frequentes, mas
-teve resultado pior no agregado porque alguns padrões mudam de fase; nesses casos, frequências
-antigas podem manter blocos que já não são tão úteis.
-
-O aumento de L1 teve impacto importante no tempo médio porque acertos em L1 custam apenas 1.
-Entretanto, aumentar L1 é caro. Por isso, a busca competitiva favoreceu `X1=5`, mas reduziu L2 e
-L3 em relação à configuração máxima, equilibrando custo e desempenho.
-
-## 7. Conclusão
-
-O simulador atende aos requisitos principais do enunciado: permite configurar os tamanhos das
-caches, escolher a política de substituição, processar strings de entrada, simular uma hierarquia
-inclusiva, calcular as métricas obrigatórias e validar as restrições de configuração.
-
-Pelos experimentos, a configuração recomendada sob custo máximo 1500 é:
+A melhor configuracao encontrada para o benchmark agregado, respeitando o custo maximo de
+`1100`, foi:
 
 ```text
-X1=5, X2=5, X3=25, política LRU
+X1=1, X2=10, X3=40, politica LFU
 ```
 
-Essa configuração apresentou o melhor tempo médio dentro da restrição adotada e ficou próxima
-do desempenho da configuração máxima, com custo menor.
+Essa configuracao usa pouca L1, mas amplia L2 e L3 dentro do orcamento. Para o conjunto de
+padroes fornecido, essa escolha reduziu as faltas globais para `33.37%` e obteve tempo medio
+`12.69`, melhor que a configuracao `X1=3, X2=6, X3=20` com o mesmo custo.
+
+O resultado mostra que maximizar L1 nem sempre e a melhor decisao sob custo limitado. Como L1
+custa 200 por bloco, reduzir L1 libera orcamento para armazenar mais blocos em L2 e L3. No
+benchmark fornecido existem padroes com working set maior e retorno tardio, o que favorece
+caches inferiores maiores.
+
+Entre as politicas, LFU foi superior na melhor configuracao porque preservou blocos repetidos
+ao longo do benchmark completo. LRU ficou proximo, mas teve mais acessos a RAM no agregado.
+
+## 7. Conclusao
+
+O simulador atende aos requisitos do enunciado e aos detalhes adicionais: permite configurar os
+tamanhos das caches, escolher a politica de substituicao, avaliar uma string isolada, avaliar
+todos os padroes do arquivo de benchmark, exibir resultado por padrao e exibir o resultado geral.
+
+A arquitetura recomendada para a avaliacao pelo benchmark completo e:
+
+```text
+X1=1, X2=10, X3=40, politica LFU, custo=1100
+```
